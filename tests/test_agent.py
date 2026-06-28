@@ -93,7 +93,7 @@ class TestAgent(unittest.TestCase):
         """Return an Agent with a mocked Anthropic client."""
         import agent as agent_module
         with patch.object(agent_module, "get_api_key", return_value="fake-key"), \
-             patch("anthropic.Anthropic"):
+             patch.object(agent_module.anthropic, "Anthropic"):
             ag = agent_module.Agent()
         ag._client = MagicMock()
         return ag
