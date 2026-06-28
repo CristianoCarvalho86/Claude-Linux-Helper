@@ -15,6 +15,7 @@ Special slash commands (type at the prompt):
 
 import sys
 
+import anthropic
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -110,7 +111,7 @@ def run() -> None:
         try:
             with console.status("[cyan]Thinking…[/cyan]"):
                 reply = agent.chat(user_input)
-        except Exception as exc:  # noqa: BLE001
+        except (anthropic.APIError, anthropic.APIConnectionError) as exc:
             console.print(f"[red]Error communicating with Claude: {exc}[/red]")
             continue
 
