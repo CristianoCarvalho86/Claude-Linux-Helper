@@ -70,12 +70,49 @@ model: sonnet
   tarefas de rotina). Alinha com `payments-module-architect` / `signature-module-architect` que fixam Sonnet.
 - **Sem `tools:`** — herda todas as ferramentas (precisa de Bash + ficheiro para *agir*), como fleet-admin.
 
-### 4.2 `description` — o gatilho (peça mais importante)
+### 4.2 Invocação por PROTOCOLO explícito (não semântico) — decisão do dono
 
-O `description` é o que faz a sessão principal **decidir invocar** o agente. Para um utilizador iniciante
-que não sabe pedir "usa o agente Linux", a **auto-delegação** é o único caminho para "ajuda em todas as
-sessões". Segue o estilo dos outros: *"Use para QUALQUER… / Dispare-o quando o utilizador disser '…'"*,
-com gatilhos concretos (instalar pacote, erro de permissão, "como faço X no Ubuntu", systemd, disco, rede…).
+> **Mudança de design (decisão do dono):** o agente **não** deve auto-delegar por semântica (evitar que
+> "saia fazendo serviço sem ser delegado"). A invocação é por **protocolo estrito**, e a `description`
+> instrui a sessão principal a só o invocar quando esse padrão aparece. Pergunta de Linux em linguagem
+> natural **sem** o padrão → responde a sessão principal, não o agente.
+
+**Sintaxe:** `{Modo}->"texto"` com `-f` opcional no fim.
+
+```
+{Explain}->"o que faz chmod +x?"
+{Diagnostic}->"que processo está a usar a porta 8080"
+{Execute}->"instala o htop"
+{execute}->"liberta espaço em disco" -f
+```
+
+**Regras invioláveis de parsing (do dono):**
+1. O texto desejado está **sempre** entre **aspas duplas** (abre e fecha). Sem aspas → inválido.
+2. **Espaços ignorados** dentro de `{}` e à volta de `->`: `{ Execute } -> "x"` ≡ `{Execute}->"x"`.
+3. **`{Modo}` não é case-sensitive:** `{explain}` ≡ `{EXPLAIN}` ≡ `{Explain}`.
+
+Entrada fora do padrão → o agente **não age**; devolve a sintaxe correta.
+
+### 4.2.1 Os três modos
+
+| Modo | Comportamento | Muta o sistema? |
+|---|---|---|
+| **`{Explain}`** | Só ensina (comando + o que cada flag faz). **Zero execução.** | Não |
+| **`{Diagnostic}`** | Só investiga (read-only) e **propõe** a correção; nunca a aplica. | Não (leitura) |
+| **`{Execute}`** | Age. Sujeito ao modelo de permissão (§4.2.2). | Sim |
+
+### 4.2.2 Modelo de permissão (regra mais importante)
+
+O agente tem plenos poderes (ler/inserir/apagar/alterar). **Mas:**
+- **Leitura** → corre livremente, sem perguntar.
+- **Inserção / deleção / alteração** → **PARA**, descreve a atividade, **explica o risco** e **pede aprovação
+  explícita**; sem "sim", não executa. Em tarefa multi-passo, apresenta o plano marcando os passos mutantes e
+  pede uma aprovação.
+- **`-f`** no fim da invocação → não pergunta nada, executa tudo (o dono assumiu o risco). Só vale em `{Execute}`.
+
+> **Override de Segurança (Prioridade Máxima do `CLAUDE.md`) — `-f` NÃO auto-aprova:** expor ficheiros locais
+> à rede; senha default em DB/broker; bind `0.0.0.0`. Estas três exigem aprovação explícita **mesmo com `-f`**.
+> (Se o dono quiser que `-f` ignore literalmente tudo, é uma decisão a registar aqui — por ora prevalece o CLAUDE.md.)
 
 ### 4.3 Fronteira vs. outros agentes (evitar colisão)
 
@@ -122,9 +159,9 @@ claude) formam o **núcleo do conhecimento básico** que o agente já domina, es
 ## 5. Critérios de aceitação
 
 - [ ] `~/.claude/agents/linux-mentor.md` existe, com frontmatter `name` + `description` + `model: sonnet`.
-- [ ] `description` tem gatilhos concretos de auto-delegação (estilo dos outros 8 agentes).
-- [ ] Corpo cobre: ensino (formato fixo), dev diário, gestão básica **e** avançada, fronteira vs.
-      fleet-admin/deploy-engineer, e regras de segurança inline.
+- [ ] `description` instrui invocação **só por protocolo** `{Modo}->"texto"` (não semântica).
+- [ ] Corpo cobre: protocolo de parsing (aspas, espaços, case), os 3 modos, o modelo de permissão (`-f` +
+      override de segurança), formato de ensino, fronteira vs. fleet-admin/deploy-engineer.
 - [ ] `/agents` lista `linux-mentor` numa sessão real (verificação do dono).
 - [ ] Este documento commitado em `docs/`.
 
