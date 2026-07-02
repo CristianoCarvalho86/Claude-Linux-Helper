@@ -1,0 +1,10 @@
+[Unit]
+Description=Relatório diário uso Claude Code - Lucas
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/cristiano/Git/Claude-Linux-Helper/tools/lucas-usage-report/report.py
+StandardOutput=journal
+StandardError=journal

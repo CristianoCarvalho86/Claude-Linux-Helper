@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# pytest
+.pytest_cache/
+
+# Secrets (never in repo)
+# Webhook URL file lives outside repo at /home/cristiano/Lucas_Claude_Hook.txt — never committed

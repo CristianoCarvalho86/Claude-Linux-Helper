@@ -1,0 +1,10 @@
+[Unit]
+Description=Dispara relatório diário uso Claude Code - Lucas (00:00 hora local)
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+Unit=lucas-usage-report.service
+
+[Install]
+WantedBy=timers.target
